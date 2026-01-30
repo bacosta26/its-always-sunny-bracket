@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 export const BracketManager = () => {
   const [brackets, setBrackets] = useState<Bracket[]>([]);
   const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState<'early' | 'late' | null>(null);
 
   useEffect(() => {
     fetchBrackets();
@@ -25,7 +25,7 @@ export const BracketManager = () => {
   };
 
   const handleCreateBracket = async (bracketGroup: 'early' | 'late') => {
-    setCreating(true);
+    setCreating(bracketGroup);
     try {
       await api.post('/admin/brackets', { bracketGroup });
       toast.success(`${bracketGroup === 'early' ? 'Seasons 1-8' : 'Seasons 9-16'} bracket created!`);
@@ -33,7 +33,7 @@ export const BracketManager = () => {
     } catch (error: any) {
       toast.error(error.response?.data?.error || 'Failed to create bracket');
     } finally {
-      setCreating(false);
+      setCreating(null);
     }
   };
 
@@ -111,10 +111,10 @@ export const BracketManager = () => {
         ) : (
           <button
             onClick={() => handleCreateBracket('early')}
-            disabled={creating}
+            disabled={creating === 'early'}
             className="btn-primary w-full"
           >
-            {creating ? 'Creating...' : 'Create Seasons 1-8 Bracket'}
+            {creating === 'early' ? 'Creating...' : 'Create Seasons 1-8 Bracket'}
           </button>
         )}
       </div>
@@ -163,10 +163,10 @@ export const BracketManager = () => {
         ) : (
           <button
             onClick={() => handleCreateBracket('late')}
-            disabled={creating}
+            disabled={creating === 'late'}
             className="btn-primary w-full"
           >
-            {creating ? 'Creating...' : 'Create Seasons 9-16 Bracket'}
+            {creating === 'late' ? 'Creating...' : 'Create Seasons 9-16 Bracket'}
           </button>
         )}
       </div>

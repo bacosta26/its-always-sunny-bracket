@@ -272,6 +272,44 @@ export const BracketService = {
   },
 
   /**
+   * Reset a bracket by deleting all votes, matchups, and the bracket itself
+   */
+  async resetBracket(bracketId: string) {
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // Delete all votes for matchups in this bracket
+      await client.query(
+        `DELETE FROM votes
+         WHERE matchup_id IN (
+           SELECT id FROM bracket_matchups WHERE bracket_id = $1
+         )`,
+        [bracketId]
+      );
+
+      // Delete all matchups for this bracket
+      await client.query(
+        'DELETE FROM bracket_matchups WHERE bracket_id = $1',
+        [bracketId]
+      );
+
+      // Delete the bracket itself
+      await client.query('DELETE FROM brackets WHERE id = $1', [bracketId]);
+
+      await client.query('COMMIT');
+
+      return { message: 'Bracket reset successfully' };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
+
+  /**
    * Get current round matchups with all vote data in one query (optimized)
    */
   async getCurrentRoundWithVotes(bracketId: string, userId?: string) {

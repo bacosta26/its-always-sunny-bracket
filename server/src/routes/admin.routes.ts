@@ -37,8 +37,15 @@ router.post('/brackets', async (req, res) => {
 
 // POST /api/admin/brackets/:id/reset - Reset a bracket
 router.post('/brackets/:id/reset', async (req, res) => {
-  // TODO: Implement bracket reset
-  res.json({ message: 'Reset bracket' });
+  try {
+    const { BracketService } = require('../services/bracket.service');
+    const result = await BracketService.resetBracket(req.params.id);
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to reset bracket',
+    });
+  }
 });
 
 // POST /api/admin/episodes - Create episode
