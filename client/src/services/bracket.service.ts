@@ -62,9 +62,17 @@ export const bracketService = {
   },
 
   async getAllEpisodes() {
-    // This would need a backend endpoint - for now return empty
-    // TODO: Add GET /api/episodes endpoint
-    return [];
+    const { data } = await api.get<{ episodes: any[] }>('/brackets/episodes');
+    // Transform snake_case to camelCase
+    return data.episodes.map(ep => ({
+      id: ep.id,
+      title: ep.title,
+      seasonNumber: ep.season_number,
+      episodeNumber: ep.episode_number,
+      description: ep.description,
+      airDate: ep.air_date,
+      bracketGroup: ep.bracket_group,
+    }));
   },
 
   async getBracketDetails(bracketId: string) {

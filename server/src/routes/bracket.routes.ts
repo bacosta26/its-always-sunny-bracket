@@ -1,8 +1,19 @@
 import { Router } from 'express';
 import { authMiddleware } from '../middleware/auth.middleware';
 import { BracketController } from '../controllers/bracket.controller';
+import { EpisodeModel } from '../models/episode.model';
 
 const router = Router();
+
+// GET /api/brackets/episodes - Get all episodes
+router.get('/episodes', async (req, res) => {
+  try {
+    const episodes = await EpisodeModel.findAll();
+    res.json({ episodes });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch episodes' });
+  }
+});
 
 // GET /api/brackets - Get all brackets
 router.get('/', BracketController.getAllBrackets);
