@@ -4,7 +4,7 @@ import * as path from 'path';
 import * as bcrypt from 'bcryptjs';
 import * as dotenv from 'dotenv';
 
-dotenv.config({ path: path.join(__dirname, '../../server/.env') });
+dotenv.config();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
