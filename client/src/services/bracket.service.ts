@@ -46,10 +46,19 @@ interface MatchupVoteResponse {
   userVote: string | null;
 }
 
+// Transform snake_case API response to camelCase
+const transformBracket = (bracket: any): Bracket => ({
+  id: bracket.id,
+  name: bracket.name,
+  bracketGroup: bracket.bracket_group,
+  status: bracket.status,
+  currentRound: bracket.current_round,
+});
+
 export const bracketService = {
   async getAllBrackets() {
-    const { data } = await api.get<{ brackets: Bracket[] }>('/brackets');
-    return data.brackets;
+    const { data } = await api.get<{ brackets: any[] }>('/brackets');
+    return data.brackets.map(transformBracket);
   },
 
   async getAllEpisodes() {
@@ -59,13 +68,19 @@ export const bracketService = {
   },
 
   async getBracketDetails(bracketId: string) {
-    const { data } = await api.get<BracketDetailsResponse>(`/brackets/${bracketId}`);
-    return data;
+    const { data } = await api.get<any>(`/brackets/${bracketId}`);
+    return {
+      bracket: transformBracket(data.bracket),
+      matchups: data.matchups,
+    };
   },
 
   async getCurrentRound(bracketId: string) {
-    const { data } = await api.get<CurrentRoundResponse>(`/brackets/${bracketId}/current`);
-    return data;
+    const { data } = await api.get<any>(`/brackets/${bracketId}/current`);
+    return {
+      bracket: transformBracket(data.bracket),
+      matchups: data.matchups,
+    };
   },
 
   async getBracketStatus(bracketId: string) {
