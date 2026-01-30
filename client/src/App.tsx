@@ -40,8 +40,6 @@ const Home = () => (
   </div>
 );
 
-import { BracketsHome } from './components/brackets/BracketsHome';
-import { BracketView } from './components/brackets/BracketView';
 const Admin = () => <div className="container-custom py-12"><h1 className="text-3xl font-bold">Admin Panel (Coming Soon)</h1></div>;
 
 function App() {
