@@ -258,11 +258,88 @@ export const DraftService = {
   },
 
   /**
-   * Calculate scores based on bracket results (to be implemented)
+   * Calculate scores based on bracket results
+   * Points system:
+   * - Round 1 win: 1 point
+   * - Round 2 win: 2 points
+   * - Round 3 win: 4 points
+   * - Round 4 win: 8 points
+   * - Champion: 16 points (total 31 points for winning all rounds)
    */
   async calculateScores(leagueId: string) {
-    // TODO: Implement scoring based on how episodes perform in brackets
-    // For now, just return placeholder
-    return { message: 'Scoring calculation coming soon' };
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      const league = await DraftLeagueModel.findById(leagueId);
+      if (!league) {
+        throw new Error('League not found');
+      }
+
+      if (league.scoring_type !== 'bracket_based') {
+        throw new Error('This league does not use bracket-based scoring');
+      }
+
+      const teams = await DraftTeamModel.findByLeague(leagueId);
+
+      for (const team of teams) {
+        const picks = await DraftPickModel.findByTeam(team.id);
+        let totalScore = 0;
+
+        // Calculate score for each picked episode
+        for (const pick of picks) {
+          const episodeScore = await this.calculateEpisodeScore(pick.episode_id);
+          totalScore += episodeScore;
+        }
+
+        // Update team score
+        await DraftTeamModel.updateScore(team.id, totalScore);
+      }
+
+      await client.query('COMMIT');
+
+      const updatedTeams = await DraftTeamModel.findByLeague(leagueId);
+      return {
+        message: 'Scores calculated successfully',
+        teams: updatedTeams,
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
+
+  /**
+   * Calculate score for a single episode based on bracket performance
+   */
+  async calculateEpisodeScore(episodeId: string): Promise<number> {
+    const result = await pool.query(
+      `SELECT
+        m.round_number,
+        m.winner_episode_id,
+        b.status as bracket_status
+       FROM bracket_matchups m
+       JOIN brackets b ON m.bracket_id = b.id
+       WHERE (m.episode1_id = $1 OR m.episode2_id = $1)
+         AND m.status = 'completed'
+       ORDER BY m.round_number DESC`,
+      [episodeId]
+    );
+
+    let score = 0;
+
+    for (const row of result.rows) {
+      // Check if this episode won the matchup
+      if (row.winner_episode_id === episodeId) {
+        // Points double each round: 1, 2, 4, 8, 16
+        const roundPoints = Math.pow(2, row.round_number - 1);
+        score += roundPoints;
+      }
+    }
+
+    return score;
   },
 };

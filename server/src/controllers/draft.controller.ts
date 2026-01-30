@@ -174,4 +174,16 @@ export const DraftController = {
       });
     }
   },
+
+  async calculateScores(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const result = await DraftService.calculateScores(id);
+      res.json(result);
+    } catch (error) {
+      res.status(400).json({
+        error: error instanceof Error ? error.message : 'Failed to calculate scores',
+      });
+    }
+  },
 };

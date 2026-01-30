@@ -9,6 +9,7 @@ import { BracketsHome } from './components/brackets/BracketsHome';
 import { BracketView } from './components/brackets/BracketView';
 import { DraftsHome } from './components/draft/DraftsHome';
 import { DraftBoard } from './components/draft/DraftBoard';
+import { AdminPanel } from './components/admin/AdminPanel';
 
 // Placeholder components
 const Home = () => (
@@ -40,7 +41,6 @@ const Home = () => (
   </div>
 );
 
-const Admin = () => <div className="container-custom py-12"><h1 className="text-3xl font-bold">Admin Panel (Coming Soon)</h1></div>;
 
 function App() {
   return (
@@ -66,10 +66,10 @@ function App() {
             <Route path="/drafts" element={<DraftsHome />} />
             <Route path="/drafts/:id" element={<DraftBoard />} />
             <Route
-              path="/admin/*"
+              path="/admin"
               element={
                 <ProtectedRoute requireAdmin>
-                  <Admin />
+                  <AdminPanel />
                 </ProtectedRoute>
               }
             />

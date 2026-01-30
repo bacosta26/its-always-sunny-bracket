@@ -31,4 +31,7 @@ router.get('/:id/current', DraftController.getCurrentState);
 // GET /api/drafts/teams/:teamId - Get team roster
 router.get('/teams/:teamId', DraftController.getTeamRoster);
 
+// POST /api/drafts/:id/calculate-scores - Calculate scores for league
+router.post('/:id/calculate-scores', authMiddleware, DraftController.calculateScores);
+
 export default router;
