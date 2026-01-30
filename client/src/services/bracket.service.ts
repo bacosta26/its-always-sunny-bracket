@@ -52,6 +52,12 @@ export const bracketService = {
     return data.brackets;
   },
 
+  async getAllEpisodes() {
+    // This would need a backend endpoint - for now return empty
+    // TODO: Add GET /api/episodes endpoint
+    return [];
+  },
+
   async getBracketDetails(bracketId: string) {
     const { data } = await api.get<BracketDetailsResponse>(`/brackets/${bracketId}`);
     return data;

@@ -7,6 +7,8 @@ import { Register } from './components/auth/Register';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { BracketsHome } from './components/brackets/BracketsHome';
 import { BracketView } from './components/brackets/BracketView';
+import { DraftsHome } from './components/draft/DraftsHome';
+import { DraftBoard } from './components/draft/DraftBoard';
 
 // Placeholder components
 const Home = () => (
@@ -40,7 +42,6 @@ const Home = () => (
 
 import { BracketsHome } from './components/brackets/BracketsHome';
 import { BracketView } from './components/brackets/BracketView';
-const Drafts = () => <div className="container-custom py-12"><h1 className="text-3xl font-bold">Drafts (Coming Soon)</h1></div>;
 const Admin = () => <div className="container-custom py-12"><h1 className="text-3xl font-bold">Admin Panel (Coming Soon)</h1></div>;
 
 function App() {
@@ -57,14 +58,8 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/brackets" element={<BracketsHome />} />
             <Route path="/brackets/:group" element={<BracketView />} />
-            <Route
-              path="/drafts/*"
-              element={
-                <ProtectedRoute>
-                  <Drafts />
-                </ProtectedRoute>
-              }
-            />
+            <Route path="/drafts" element={<DraftsHome />} />
+            <Route path="/drafts/:id" element={<DraftBoard />} />
             <Route
               path="/admin/*"
               element={
