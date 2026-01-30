@@ -36,6 +36,28 @@ export interface DraftPick {
   };
 }
 
+// Transform snake_case API response to camelCase
+const transformLeague = (league: any): DraftLeague => ({
+  id: league.id,
+  name: league.name,
+  createdBy: league.created_by,
+  status: league.status,
+  maxTeams: league.max_teams,
+  episodesPerTeam: league.episodes_per_team,
+  scoringType: league.scoring_type,
+  currentDraftPick: league.current_draft_pick,
+  createdAt: league.created_at,
+});
+
+const transformTeam = (team: any): DraftTeam => ({
+  id: team.id,
+  leagueId: team.league_id,
+  userId: team.user_id,
+  teamName: team.team_name,
+  draftPosition: team.draft_position,
+  totalScore: team.total_score,
+});
+
 export const draftService = {
   async createLeague(
     name: string,
@@ -49,28 +71,28 @@ export const draftService = {
       episodesPerTeam,
       scoringType,
     });
-    return data.league as DraftLeague;
+    return transformLeague(data.league);
   },
 
   async getAllLeagues() {
-    const { data } = await api.get<{ leagues: DraftLeague[] }>('/drafts');
-    return data.leagues;
+    const { data } = await api.get<{ leagues: any[] }>('/drafts');
+    return data.leagues.map(transformLeague);
   },
 
   async getUserLeagues() {
-    const { data } = await api.get<{ leagues: DraftLeague[] }>('/drafts/user');
-    return data.leagues;
+    const { data } = await api.get<{ leagues: any[] }>('/drafts/user');
+    return data.leagues.map(transformLeague);
   },
 
   async getLeagueDetails(leagueId: string) {
-    const { data } = await api.get<{
-      league: DraftLeague;
-      teams: DraftTeam[];
-      picks: DraftPick[];
-      currentPickingTeam: DraftTeam | null;
-      availableEpisodeCount: number;
-    }>(`/drafts/${leagueId}`);
-    return data;
+    const { data } = await api.get<any>(`/drafts/${leagueId}`);
+    return {
+      league: transformLeague(data.league),
+      teams: data.teams.map(transformTeam),
+      picks: data.picks,
+      currentPickingTeam: data.currentPickingTeam ? transformTeam(data.currentPickingTeam) : null,
+      availableEpisodeCount: data.availableEpisodeCount,
+    };
   },
 
   async joinLeague(leagueId: string, teamName: string) {
@@ -89,20 +111,20 @@ export const draftService = {
   },
 
   async getCurrentState(leagueId: string) {
-    const { data } = await api.get<{
-      status: string;
-      currentPick: number | null;
-      currentPickingTeam: DraftTeam | null;
-      pickCount: number;
-    }>(`/drafts/${leagueId}/current`);
-    return data;
+    const { data } = await api.get<any>(`/drafts/${leagueId}/current`);
+    return {
+      status: data.status,
+      currentPick: data.currentPick,
+      currentPickingTeam: data.currentPickingTeam ? transformTeam(data.currentPickingTeam) : null,
+      pickCount: data.pickCount,
+    };
   },
 
   async getTeamRoster(teamId: string) {
-    const { data } = await api.get<{
-      team: DraftTeam;
-      picks: DraftPick[];
-    }>(`/drafts/teams/${teamId}`);
-    return data;
+    const { data } = await api.get<any>(`/drafts/teams/${teamId}`);
+    return {
+      team: transformTeam(data.team),
+      picks: data.picks,
+    };
   },
 };
