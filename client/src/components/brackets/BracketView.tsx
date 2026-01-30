@@ -13,7 +13,7 @@ export const BracketView = () => {
   const { user } = useAuth();
 
   const [bracket, setBracket] = useState<Bracket | null>(null);
-  const [matchups, setMatchups] = useState<MatchupType[]>([]);
+  const [matchupsByRound, setMatchupsByRound] = useState<Record<number, MatchupType[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,11 +29,21 @@ export const BracketView = () => {
         return;
       }
 
-      // Get all data in one optimized request (1 query instead of 30+)
-      const data = await bracketService.getCurrentRoundWithVotes(targetBracket.id);
+      // Get ALL matchups with votes in one query
+      const data = await bracketService.getAllMatchupsWithVotes(targetBracket.id);
 
       setBracket(data.bracket);
-      setMatchups(data.matchups);
+
+      // Group matchups by round
+      const byRound: Record<number, MatchupType[]> = {};
+      data.matchups.forEach((matchup: MatchupType) => {
+        if (!byRound[matchup.roundNumber]) {
+          byRound[matchup.roundNumber] = [];
+        }
+        byRound[matchup.roundNumber].push(matchup);
+      });
+
+      setMatchupsByRound(byRound);
       setError(null);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to load bracket');
@@ -89,13 +99,24 @@ export const BracketView = () => {
   }
 
   const isComplete = bracket.status === 'completed';
-  const champion = isComplete && matchups.length === 1 ? matchups[0].winnerEpisode : null;
+  const rounds = Object.keys(matchupsByRound).map(Number).sort((a, b) => a - b);
+  const maxRound = Math.max(...rounds);
+  const finalMatchup = matchupsByRound[maxRound]?.[0];
+  const champion = isComplete && finalMatchup ? finalMatchup.winnerEpisode : null;
+
+  // Determine round names
+  const getRoundName = (roundNum: number, totalRounds: number) => {
+    if (roundNum === totalRounds) return 'Championship';
+    if (roundNum === totalRounds - 1) return 'Semi-Finals';
+    if (roundNum === totalRounds - 2) return 'Quarter-Finals';
+    return `Round ${roundNum}`;
+  };
 
   return (
     <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #2c1810 0%, #3d2817 50%, #1a0f08 100%)' }}>
-      <div className="container-custom py-8">
+      <div className="py-8">
         {/* Paddy's Pub Header */}
-        <div className="mb-8">
+        <div className="container-custom mb-8">
           <button
             onClick={() => navigate('/brackets')}
             className="text-yellow-400 hover:text-yellow-300 mb-4 flex items-center gap-2"
@@ -123,24 +144,26 @@ export const BracketView = () => {
                   : 'bg-amber-900 text-yellow-200 border-amber-700'
               }`}
             >
-              {isComplete ? '🏆 CHAMPION CROWNED 🏆' : `🍻 Round ${bracket.currentRound} - DRINK UP! 🍻`}
+              {isComplete ? '🏆 CHAMPION CROWNED 🏆' : `🍻 ${getRoundName(bracket.currentRound, maxRound)} - DRINK UP! 🍻`}
             </div>
           </div>
         </div>
 
         {/* Champion Display */}
         {champion && (
-          <div className="mb-8 p-8 bg-gradient-to-br from-yellow-500 via-yellow-400 to-yellow-600 rounded-lg shadow-2xl border-4 border-yellow-700 transform hover:scale-105 transition-transform">
-            <div className="text-center">
-              <h2 className="text-4xl font-black mb-4 text-gray-900" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.2)' }}>
-                🏆 PADDY'S PUB CHAMPION! 🏆
-              </h2>
-              <div className="bg-gray-900 bg-opacity-20 rounded-lg p-6 backdrop-blur-sm">
-                <h3 className="text-3xl font-bold mb-2 text-gray-900">{champion.title}</h3>
-                <p className="text-xl text-gray-800 font-semibold">
-                  Season {champion.seasonNumber}, Episode {champion.episodeNumber}
-                </p>
-                <p className="text-lg text-gray-700 mt-2">The People's Choice! 🍺</p>
+          <div className="container-custom mb-8">
+            <div className="p-8 bg-gradient-to-br from-yellow-500 via-yellow-400 to-yellow-600 rounded-lg shadow-2xl border-4 border-yellow-700 transform hover:scale-105 transition-transform">
+              <div className="text-center">
+                <h2 className="text-4xl font-black mb-4 text-gray-900" style={{ textShadow: '2px 2px 4px rgba(0,0,0,0.2)' }}>
+                  🏆 PADDY'S PUB CHAMPION! 🏆
+                </h2>
+                <div className="bg-gray-900 bg-opacity-20 rounded-lg p-6 backdrop-blur-sm">
+                  <h3 className="text-3xl font-bold mb-2 text-gray-900">{champion.title}</h3>
+                  <p className="text-xl text-gray-800 font-semibold">
+                    Season {champion.seasonNumber}, Episode {champion.episodeNumber}
+                  </p>
+                  <p className="text-lg text-gray-700 mt-2">The People's Choice! 🍺</p>
+                </div>
               </div>
             </div>
           </div>
@@ -148,59 +171,92 @@ export const BracketView = () => {
 
         {/* Login Prompt */}
         {!user && bracket.status === 'active' && (
-          <div className="mb-8 p-6 bg-amber-900 border-4 border-yellow-600 rounded-lg shadow-xl">
-            <p className="text-center text-yellow-200 text-lg">
-              <span className="font-bold">🍺 Step up to the bar! 🍺</span>
-              <br />
-              <a href="/login" className="font-bold underline hover:text-yellow-300">
-                Login
-              </a>
-              {' or '}
-              <a href="/register" className="font-bold underline hover:text-yellow-300">
-                sign up
-              </a>
-              {' to cast your vote!'}
-            </p>
+          <div className="container-custom mb-8">
+            <div className="p-6 bg-amber-900 border-4 border-yellow-600 rounded-lg shadow-xl">
+              <p className="text-center text-yellow-200 text-lg">
+                <span className="font-bold">🍺 Step up to the bar! 🍺</span>
+                <br />
+                <a href="/login" className="font-bold underline hover:text-yellow-300">
+                  Login
+                </a>
+                {' or '}
+                <a href="/register" className="font-bold underline hover:text-yellow-300">
+                  sign up
+                </a>
+                {' to cast your vote!'}
+              </p>
+            </div>
           </div>
         )}
 
-        {/* Matchups - Tournament Bracket Style */}
-        {matchups.length > 0 ? (
-          <div className="space-y-6">
-            <div className="text-center mb-4">
-              <h3 className="text-2xl font-bold text-yellow-400">
-                ⚔️ Current Matchups ⚔️
-              </h3>
-              <p className="text-yellow-200 text-sm mt-2">
-                {matchups.filter(m => m.status === 'active').length} matchups live •
-                {matchups.filter(m => m.status === 'completed').length} complete
-              </p>
-            </div>
+        {/* Tournament Bracket Tree */}
+        {rounds.length > 0 ? (
+          <div className="overflow-x-auto pb-8">
+            <div className="min-w-max px-8">
+              <div className="flex gap-12 justify-center items-start">
+                {rounds.map((roundNum) => {
+                  const matchups = matchupsByRound[roundNum];
+                  const isCurrentRound = roundNum === bracket.currentRound;
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {matchups.map((matchup) => (
-                <Matchup
-                  key={matchup.id}
-                  matchup={matchup}
-                  onVoteCast={handleVoteCast}
-                  hideVotes={!user?.isAdmin && matchup.status !== 'completed'}
-                />
-              ))}
+                  return (
+                    <div key={roundNum} className="flex flex-col">
+                      {/* Round Header */}
+                      <div className="text-center mb-6 sticky top-0 z-10 bg-gradient-to-b from-stone-900 to-transparent pb-4">
+                        <div className={`inline-block px-4 py-2 rounded-lg border-2 ${
+                          isCurrentRound
+                            ? 'bg-yellow-600 border-yellow-500 text-gray-900 font-bold shadow-lg'
+                            : 'bg-stone-800 border-stone-600 text-yellow-300'
+                        }`}>
+                          {getRoundName(roundNum, maxRound)}
+                        </div>
+                        <p className="text-yellow-200 text-xs mt-1">
+                          {matchups.filter(m => m.status === 'active').length > 0 && '🔴 LIVE'}
+                        </p>
+                      </div>
+
+                      {/* Matchups for this round */}
+                      <div className="flex flex-col gap-8" style={{
+                        // Add spacing between matchups to create bracket tree effect
+                        paddingTop: roundNum > 1 ? `${(Math.pow(2, roundNum - 1) - 1) * 2}rem` : 0,
+                      }}>
+                        {matchups.map((matchup, idx) => (
+                          <div
+                            key={matchup.id}
+                            style={{
+                              marginBottom: roundNum > 1 ? `${Math.pow(2, roundNum) * 2}rem` : '0',
+                            }}
+                          >
+                            <Matchup
+                              matchup={matchup}
+                              onVoteCast={handleVoteCast}
+                              hideVotes={!user?.isAdmin && matchup.status !== 'completed'}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         ) : (
-          <div className="p-8 bg-amber-900 border-2 border-yellow-600 rounded-lg text-center">
-            <p className="text-yellow-200 text-lg">🍺 No matchups brewing yet... Check back soon! 🍺</p>
+          <div className="container-custom">
+            <div className="p-8 bg-amber-900 border-2 border-yellow-600 rounded-lg text-center">
+              <p className="text-yellow-200 text-lg">🍺 No matchups brewing yet... Check back soon! 🍺</p>
+            </div>
           </div>
         )}
 
         {/* Polling Indicator */}
         {!isComplete && (
-          <div className="mt-8 text-center">
-            <div className="inline-block px-6 py-3 bg-amber-900 border-2 border-yellow-700 rounded-lg">
-              <p className="text-yellow-200 text-sm">
-                🍻 Vote counts update every 10 seconds • Grab a drink while you wait! 🍻
-              </p>
+          <div className="container-custom mt-8">
+            <div className="text-center">
+              <div className="inline-block px-6 py-3 bg-amber-900 border-2 border-yellow-700 rounded-lg">
+                <p className="text-yellow-200 text-sm">
+                  🍻 Vote counts update every 10 seconds • Grab a drink while you wait! 🍻
+                </p>
+              </div>
             </div>
           </div>
         )}

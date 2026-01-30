@@ -99,6 +99,14 @@ export const bracketService = {
     };
   },
 
+  async getAllMatchupsWithVotes(bracketId: string) {
+    const { data } = await api.get<any>(`/brackets/${bracketId}/all-matchups-with-votes`);
+    return {
+      bracket: transformBracket(data.bracket),
+      matchups: data.matchups,
+    };
+  },
+
   async getBracketStatus(bracketId: string) {
     const { data } = await api.get<BracketStatusResponse>(`/brackets/${bracketId}/status`);
     return data;

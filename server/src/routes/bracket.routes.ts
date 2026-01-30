@@ -36,6 +36,18 @@ router.get('/:id/current-with-votes', (req, res, next) => {
   });
 }, BracketController.getCurrentRoundWithVotes);
 
+// GET /api/brackets/:id/all-matchups-with-votes - Get ALL matchups with vote data (for bracket tree)
+router.get('/:id/all-matchups-with-votes', (req, res, next) => {
+  // Try to authenticate, but don't require it
+  authMiddleware(req, res, (err) => {
+    if (err) {
+      // Continue without auth
+      (req as any).user = undefined;
+    }
+    next();
+  });
+}, BracketController.getAllMatchupsWithVotes);
+
 // GET /api/brackets/:id/status - Get bracket status (for polling)
 router.get('/:id/status', BracketController.getBracketStatus);
 
