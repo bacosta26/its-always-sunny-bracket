@@ -31,8 +31,8 @@ router.patch('/users/:id/admin', async (req, res) => {
 
 // POST /api/admin/brackets - Create a new bracket
 router.post('/brackets', async (req, res) => {
-  // TODO: Implement bracket creation with matchup generation
-  res.json({ message: 'Create bracket' });
+  const { BracketController } = require('../controllers/bracket.controller');
+  await BracketController.initializeBracket(req, res);
 });
 
 // POST /api/admin/brackets/:id/reset - Reset a bracket
