@@ -9,7 +9,7 @@ const router = Router();
 router.use(authMiddleware, adminMiddleware);
 
 // GET /api/admin/users - Get all users
-router.get('/users', async (req, res) => {
+router.get('/users', async (_req, res) => {
   try {
     const users = await UserModel.getAll();
     res.json({ users });
@@ -103,19 +103,19 @@ router.post('/matchups/:id/close', async (req, res) => {
 });
 
 // POST /api/admin/episodes - Create episode
-router.post('/episodes', async (req, res) => {
+router.post('/episodes', async (_req, res) => {
   // TODO: Implement episode creation
   res.json({ message: 'Create episode' });
 });
 
 // PUT /api/admin/episodes/:id - Update episode
-router.put('/episodes/:id', async (req, res) => {
+router.put('/episodes/:id', async (_req, res) => {
   // TODO: Implement episode update
   res.json({ message: 'Update episode' });
 });
 
 // DELETE /api/admin/episodes/:id - Delete episode
-router.delete('/episodes/:id', async (req, res) => {
+router.delete('/episodes/:id', async (_req, res) => {
   // TODO: Implement episode deletion
   res.json({ message: 'Delete episode' });
 });

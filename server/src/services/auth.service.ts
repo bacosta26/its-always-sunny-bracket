@@ -1,4 +1,4 @@
-import { UserModel, CreateUserDTO } from '../models/user.model';
+import { UserModel } from '../models/user.model';
 import { hashPassword, comparePassword, validatePassword } from '../utils/password.utils';
 import { generateAccessToken, generateRefreshToken, JWTPayload } from '../utils/jwt.utils';
 

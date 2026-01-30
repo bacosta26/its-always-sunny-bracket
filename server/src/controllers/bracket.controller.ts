@@ -3,7 +3,7 @@ import { BracketService } from '../services/bracket.service';
 import { BracketModel } from '../models/bracket.model';
 
 export const BracketController = {
-  async getAllBrackets(req: Request, res: Response): Promise<void> {
+  async getAllBrackets(_req: Request, res: Response): Promise<void> {
     try {
       const brackets = await BracketModel.findAll();
       res.json({ brackets });

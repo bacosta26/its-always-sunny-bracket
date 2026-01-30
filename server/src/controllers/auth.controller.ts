@@ -52,7 +52,7 @@ export const AuthController = {
     }
   },
 
-  async logout(req: Request, res: Response): Promise<void> {
+  async logout(_req: Request, res: Response): Promise<void> {
     res.clearCookie('refreshToken');
     res.json({ message: 'Logged out successfully' });
   },

@@ -6,7 +6,7 @@ import { EpisodeModel } from '../models/episode.model';
 const router = Router();
 
 // GET /api/brackets/episodes - Get all episodes
-router.get('/episodes', async (req, res) => {
+router.get('/episodes', async (_req, res) => {
   try {
     const episodes = await EpisodeModel.findAll();
     res.json({ episodes });

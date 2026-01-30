@@ -34,7 +34,7 @@ export const DraftController = {
     }
   },
 
-  async getAllLeagues(req: AuthRequest, res: Response): Promise<void> {
+  async getAllLeagues(_req: AuthRequest, res: Response): Promise<void> {
     try {
       const leagues = await DraftLeagueModel.findAll();
       res.json({ leagues });
