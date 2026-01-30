@@ -51,9 +51,16 @@ function App() {
           <Toaster position="top-right" />
 
           <Routes>
-            <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route
+              path="/"
+              element={
+                <ProtectedRoute>
+                  <Home />
+                </ProtectedRoute>
+              }
+            />
             <Route path="/brackets" element={<BracketsHome />} />
             <Route path="/brackets/:group" element={<BracketView />} />
             <Route path="/drafts" element={<DraftsHome />} />
