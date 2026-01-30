@@ -22,8 +22,8 @@ export const DraftBoard = () => {
   const [teamName, setTeamName] = useState('');
   const [joining, setJoining] = useState(false);
 
-  const userTeam = teams.find(t => t.userId === user?.userId);
-  const isCreator = league?.createdBy === user?.userId;
+  const userTeam = teams.find(t => t.userId === user?.id);
+  const isCreator = league?.createdBy === user?.id;
   const isDrafting = league?.status === 'drafting';
   const isUserTurn = isDrafting && currentPickingTeam?.id === userTeam?.id;
 
