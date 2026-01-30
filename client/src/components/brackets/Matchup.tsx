@@ -61,7 +61,10 @@ export const Matchup = ({ matchup, onVoteCast, hideVotes = false }: MatchupProps
         >
           <div className="flex justify-between items-start mb-2">
             <div className="flex-1">
-              <h3 className="font-bold text-lg text-yellow-100">{episode1.title}</h3>
+              <h3 className="font-bold text-lg text-yellow-100">
+                {isEp1Winner && '🍺 '}
+                {episode1.title}
+              </h3>
               <p className="text-sm text-yellow-200 opacity-80">
                 S{episode1.seasonNumber}E{episode1.episodeNumber}
               </p>
@@ -128,7 +131,10 @@ export const Matchup = ({ matchup, onVoteCast, hideVotes = false }: MatchupProps
         >
           <div className="flex justify-between items-start mb-2">
             <div className="flex-1">
-              <h3 className="font-bold text-lg text-yellow-100">{episode2.title}</h3>
+              <h3 className="font-bold text-lg text-yellow-100">
+                {isEp2Winner && '🍺 '}
+                {episode2.title}
+              </h3>
               <p className="text-sm text-yellow-200 opacity-80">
                 S{episode2.seasonNumber}E{episode2.episodeNumber}
               </p>
