@@ -270,4 +270,93 @@ export const BracketService = {
     // Check if round is complete
     await this.checkAndAdvanceRound(matchup.bracket_id);
   },
+
+  /**
+   * Get current round matchups with all vote data in one query (optimized)
+   */
+  async getCurrentRoundWithVotes(bracketId: string, userId?: string) {
+    const bracket = await BracketModel.findById(bracketId);
+    if (!bracket) {
+      throw new Error('Bracket not found');
+    }
+
+    // Get all matchups for current round with episodes and vote counts in one query
+    const result = await pool.query(
+      `SELECT
+        m.id,
+        m.bracket_id,
+        m.round_number,
+        m.matchup_position,
+        m.status,
+        m.vote_count_ep1,
+        m.vote_count_ep2,
+        m.winner_episode_id,
+        e1.id as ep1_id,
+        e1.title as ep1_title,
+        e1.season_number as ep1_season,
+        e1.episode_number as ep1_episode,
+        e1.description as ep1_description,
+        e1.bracket_group as ep1_bracket_group,
+        e2.id as ep2_id,
+        e2.title as ep2_title,
+        e2.season_number as ep2_season,
+        e2.episode_number as ep2_episode,
+        e2.description as ep2_description,
+        e2.bracket_group as ep2_bracket_group,
+        winner.id as winner_id,
+        winner.title as winner_title,
+        winner.season_number as winner_season,
+        winner.episode_number as winner_episode,
+        CASE WHEN $2::uuid IS NOT NULL
+          THEN (SELECT episode_id FROM votes WHERE user_id = $2 AND matchup_id = m.id)
+          ELSE NULL
+        END as user_vote
+       FROM bracket_matchups m
+       LEFT JOIN episodes e1 ON m.episode1_id = e1.id
+       LEFT JOIN episodes e2 ON m.episode2_id = e2.id
+       LEFT JOIN episodes winner ON m.winner_episode_id = winner.id
+       WHERE m.bracket_id = $1 AND m.round_number = $3
+       ORDER BY m.matchup_position`,
+      [bracketId, userId || null, bracket.current_round]
+    );
+
+    // Transform the flat query results into structured matchup objects
+    const matchups = result.rows.map(row => ({
+      id: row.id,
+      bracketId: row.bracket_id,
+      roundNumber: row.round_number,
+      matchupPosition: row.matchup_position,
+      status: row.status,
+      voteCountEp1: row.vote_count_ep1,
+      voteCountEp2: row.vote_count_ep2,
+      episode1: row.ep1_id ? {
+        id: row.ep1_id,
+        title: row.ep1_title,
+        seasonNumber: row.ep1_season,
+        episodeNumber: row.ep1_episode,
+        description: row.ep1_description,
+        bracketGroup: row.ep1_bracket_group,
+      } : undefined,
+      episode2: row.ep2_id ? {
+        id: row.ep2_id,
+        title: row.ep2_title,
+        seasonNumber: row.ep2_season,
+        episodeNumber: row.ep2_episode,
+        description: row.ep2_description,
+        bracketGroup: row.ep2_bracket_group,
+      } : undefined,
+      winnerEpisode: row.winner_id ? {
+        id: row.winner_id,
+        title: row.winner_title,
+        seasonNumber: row.winner_season,
+        episodeNumber: row.winner_episode,
+      } : undefined,
+      userVote: row.user_vote,
+    }));
+
+    return {
+      bracket,
+      matchups,
+    };
+  },
 };

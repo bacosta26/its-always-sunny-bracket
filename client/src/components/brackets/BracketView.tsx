@@ -19,6 +19,7 @@ export const BracketView = () => {
 
   const fetchBracketData = useCallback(async () => {
     try {
+      // First find the bracket ID by group
       const allBrackets = await bracketService.getAllBrackets();
       const targetBracket = allBrackets.find(b => b.bracketGroup === group);
 
@@ -28,28 +29,11 @@ export const BracketView = () => {
         return;
       }
 
-      const data = await bracketService.getCurrentRound(targetBracket.id);
-
-      // Fetch user votes for each matchup
-      const matchupsWithVotes = await Promise.all(
-        data.matchups.map(async (matchup) => {
-          try {
-            const voteData = await bracketService.getMatchupVotes(matchup.id);
-            return {
-              ...matchup,
-              userVote: voteData.userVote,
-              voteCountEp1: voteData.matchup.voteCountEp1,
-              voteCountEp2: voteData.matchup.voteCountEp2,
-              winnerEpisode: voteData.matchup.winner,
-            };
-          } catch {
-            return matchup;
-          }
-        })
-      );
+      // Get all data in one optimized request (1 query instead of 30+)
+      const data = await bracketService.getCurrentRoundWithVotes(targetBracket.id);
 
       setBracket(data.bracket);
-      setMatchups(matchupsWithVotes);
+      setMatchups(data.matchups);
       setError(null);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to load bracket');

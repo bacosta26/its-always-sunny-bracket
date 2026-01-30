@@ -78,4 +78,19 @@ export const BracketController = {
       });
     }
   },
+
+  async getCurrentRoundWithVotes(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      // Get userId from auth middleware if authenticated
+      const userId = (req as any).user?.userId;
+
+      const data = await BracketService.getCurrentRoundWithVotes(id, userId);
+      res.json(data);
+    } catch (error) {
+      res.status(404).json({
+        error: error instanceof Error ? error.message : 'Bracket not found',
+      });
+    }
+  },
 };
