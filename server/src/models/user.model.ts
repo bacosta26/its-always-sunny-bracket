@@ -64,4 +64,42 @@ export const UserModel = {
       [isAdmin, userId]
     );
   },
+
+  async deleteUser(userId: string): Promise<void> {
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      // Delete user's votes
+      await client.query('DELETE FROM votes WHERE user_id = $1', [userId]);
+
+      // Delete user's draft picks (through their teams)
+      await client.query(
+        `DELETE FROM draft_picks WHERE team_id IN (
+          SELECT id FROM draft_teams WHERE user_id = $1
+        )`,
+        [userId]
+      );
+
+      // Delete user's draft teams
+      await client.query('DELETE FROM draft_teams WHERE user_id = $1', [userId]);
+
+      // For leagues created by this user, we'll keep them but set created_by to NULL
+      await client.query(
+        'UPDATE draft_leagues SET created_by = NULL WHERE created_by = $1',
+        [userId]
+      );
+
+      // Finally, delete the user
+      await client.query('DELETE FROM users WHERE id = $1', [userId]);
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  },
 };

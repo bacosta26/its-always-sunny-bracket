@@ -41,6 +41,20 @@ export const UserManagement = () => {
     }
   };
 
+  const handleDeleteUser = async (userId: string, username: string) => {
+    if (!confirm(`Are you sure you want to delete user "${username}"? This will delete all their votes and draft teams. This action cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await api.delete(`/admin/users/${userId}`);
+      toast.success('User deleted successfully');
+      await fetchUsers();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to delete user');
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading users...</div>;
   }
@@ -107,16 +121,24 @@ export const UserManagement = () => {
                     {new Date(user.created_at).toLocaleDateString()}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => handleToggleAdmin(user.id, user.is_admin)}
-                      className={`px-3 py-1 text-xs font-semibold rounded-lg transition ${
-                        user.is_admin
-                          ? 'bg-red-100 hover:bg-red-200 text-red-800'
-                          : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
-                      }`}
-                    >
-                      {user.is_admin ? 'Revoke Admin' : 'Make Admin'}
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleToggleAdmin(user.id, user.is_admin)}
+                        className={`px-3 py-1 text-xs font-semibold rounded-lg transition ${
+                          user.is_admin
+                            ? 'bg-red-100 hover:bg-red-200 text-red-800'
+                            : 'bg-blue-100 hover:bg-blue-200 text-blue-800'
+                        }`}
+                      >
+                        {user.is_admin ? 'Revoke Admin' : 'Make Admin'}
+                      </button>
+                      <button
+                        onClick={() => handleDeleteUser(user.id, user.username)}
+                        className="px-3 py-1 text-xs font-semibold rounded-lg bg-red-600 hover:bg-red-700 text-white transition"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}

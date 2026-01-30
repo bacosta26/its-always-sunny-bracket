@@ -29,6 +29,27 @@ router.patch('/users/:id/admin', async (req, res) => {
   }
 });
 
+// DELETE /api/admin/users/:id - Delete a user
+router.delete('/users/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const currentUserId = (req as any).user.userId;
+
+    // Prevent admins from deleting themselves
+    if (id === currentUserId) {
+      res.status(400).json({ error: 'Cannot delete your own account' });
+      return;
+    }
+
+    await UserModel.deleteUser(id);
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to delete user'
+    });
+  }
+});
+
 // POST /api/admin/brackets - Create a new bracket
 router.post('/brackets', async (req, res) => {
   const { BracketController } = require('../controllers/bracket.controller');
