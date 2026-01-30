@@ -6,6 +6,8 @@ import { Matchup } from './Matchup';
 import { LoadingSpinner } from '../common/LoadingSpinner';
 import { usePolling } from '../../hooks/usePolling';
 import { useAuth } from '../../context/AuthContext';
+import { VotingProgress } from './VotingProgress';
+import { PreviousRound } from './PreviousRound';
 
 export const BracketView = () => {
   const { group } = useParams<{ group: 'early' | 'late' }>();
@@ -161,6 +163,20 @@ export const BracketView = () => {
               </a>
               {' to cast your vote!'}
             </p>
+          </div>
+        )}
+
+        {/* Voting Progress - Beer Glass Tracker */}
+        {bracket.status === 'active' && (
+          <div className="mb-8">
+            <VotingProgress bracketId={bracket.id} />
+          </div>
+        )}
+
+        {/* Previous Round Results */}
+        {bracket.currentRound > 1 && (
+          <div className="mb-8">
+            <PreviousRound bracketId={bracket.id} />
           </div>
         )}
 

@@ -88,7 +88,8 @@ export const DraftController = {
         return;
       }
 
-      const team = await DraftService.joinLeague(id, req.user.userId, teamName);
+      const teamFlag = req.body.teamFlag || 'red-wine';
+      const team = await DraftService.joinLeague(id, req.user.userId, teamName, teamFlag);
 
       res.status(201).json({ team, message: 'Successfully joined league' });
     } catch (error) {

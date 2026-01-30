@@ -51,4 +51,10 @@ router.get('/:id/all-matchups-with-votes', (req, res, next) => {
 // GET /api/brackets/:id/status - Get bracket status (for polling)
 router.get('/:id/status', BracketController.getBracketStatus);
 
+// GET /api/brackets/:id/voting-progress - Get voting progress for all users
+router.get('/:id/voting-progress', BracketController.getVotingProgress);
+
+// GET /api/brackets/:id/previous-round - Get previous round matchups with winners
+router.get('/:id/previous-round', BracketController.getPreviousRound);
+
 export default router;

@@ -108,4 +108,28 @@ export const BracketController = {
       });
     }
   },
+
+  async getVotingProgress(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const data = await BracketService.getVotingProgress(id);
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({
+        error: error instanceof Error ? error.message : 'Failed to fetch voting progress',
+      });
+    }
+  },
+
+  async getPreviousRound(req: Request, res: Response): Promise<void> {
+    try {
+      const { id } = req.params;
+      const data = await BracketService.getPreviousRound(id);
+      res.json(data);
+    } catch (error) {
+      res.status(500).json({
+        error: error instanceof Error ? error.message : 'Failed to fetch previous round',
+      });
+    }
+  },
 };

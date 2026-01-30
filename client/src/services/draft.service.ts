@@ -17,6 +17,7 @@ export interface DraftTeam {
   leagueId: string;
   userId: string;
   teamName: string;
+  teamFlag: string;
   draftPosition: number;
   totalScore: number;
 }
@@ -54,6 +55,7 @@ const transformTeam = (team: any): DraftTeam => ({
   leagueId: team.league_id,
   userId: team.user_id,
   teamName: team.team_name,
+  teamFlag: team.team_flag || 'red-wine',
   draftPosition: team.draft_position,
   totalScore: team.total_score,
 });
@@ -95,8 +97,8 @@ export const draftService = {
     };
   },
 
-  async joinLeague(leagueId: string, teamName: string) {
-    const { data } = await api.post(`/drafts/${leagueId}/join`, { teamName });
+  async joinLeague(leagueId: string, teamName: string, teamFlag: string = 'red-wine') {
+    const { data } = await api.post(`/drafts/${leagueId}/join`, { teamName, teamFlag });
     return data;
   },
 

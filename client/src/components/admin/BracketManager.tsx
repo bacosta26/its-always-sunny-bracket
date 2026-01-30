@@ -51,6 +51,20 @@ export const BracketManager = () => {
     }
   };
 
+  const handleAdvanceRound = async (bracketId: string) => {
+    if (!confirm('Close current round and advance to next round? Winners will be determined by vote count.')) {
+      return;
+    }
+
+    try {
+      const { data } = await api.post(`/admin/brackets/${bracketId}/advance`);
+      toast.success(data.message);
+      await fetchBrackets();
+    } catch (error: any) {
+      toast.error(error.response?.data?.error || 'Failed to advance round');
+    }
+  };
+
   if (loading) {
     return <div className="text-center py-8">Loading brackets...</div>;
   }
@@ -100,6 +114,14 @@ export const BracketManager = () => {
               >
                 View Bracket
               </button>
+              {earlyBracket.status === 'active' && (
+                <button
+                  onClick={() => handleAdvanceRound(earlyBracket.id)}
+                  className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition"
+                >
+                  Advance Round
+                </button>
+              )}
               <button
                 onClick={() => handleResetBracket(earlyBracket.id)}
                 className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition"
@@ -152,6 +174,14 @@ export const BracketManager = () => {
               >
                 View Bracket
               </button>
+              {lateBracket.status === 'active' && (
+                <button
+                  onClick={() => handleAdvanceRound(lateBracket.id)}
+                  className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition"
+                >
+                  Advance Round
+                </button>
+              )}
               <button
                 onClick={() => handleResetBracket(lateBracket.id)}
                 className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold transition"
@@ -176,7 +206,8 @@ export const BracketManager = () => {
         <ul className="text-sm text-gray-700 space-y-1">
           <li>• Episodes are randomly seeded into a tournament bracket</li>
           <li>• Users vote for their favorite episode in each matchup</li>
-          <li>• Winners automatically advance to the next round</li>
+          <li>• Click "Advance Round" to close voting and move winners to the next round</li>
+          <li>• Winners are determined by vote count (ties go to episode 1)</li>
           <li>• The last episode standing becomes the champion!</li>
         </ul>
       </div>

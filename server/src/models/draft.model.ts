@@ -18,6 +18,7 @@ export interface DraftTeam {
   league_id: string;
   user_id: string;
   team_name: string;
+  team_flag: string;
   draft_position: number;
   total_score: number;
   created_at: Date;
@@ -105,13 +106,14 @@ export const DraftTeamModel = {
     leagueId: string,
     userId: string,
     teamName: string,
+    teamFlag: string,
     draftPosition: number
   ): Promise<DraftTeam> {
     const result = await pool.query(
-      `INSERT INTO draft_teams (league_id, user_id, team_name, draft_position)
-       VALUES ($1, $2, $3, $4)
+      `INSERT INTO draft_teams (league_id, user_id, team_name, team_flag, draft_position)
+       VALUES ($1, $2, $3, $4, $5)
        RETURNING *`,
-      [leagueId, userId, teamName, draftPosition]
+      [leagueId, userId, teamName, teamFlag, draftPosition]
     );
     return result.rows[0];
   },

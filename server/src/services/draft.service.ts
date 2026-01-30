@@ -31,7 +31,7 @@ export const DraftService = {
   /**
    * Join a league by creating a team
    */
-  async joinLeague(leagueId: string, userId: string, teamName: string) {
+  async joinLeague(leagueId: string, userId: string, teamName: string, teamFlag: string = 'red-wine') {
     const client = await pool.connect();
 
     try {
@@ -60,7 +60,7 @@ export const DraftService = {
 
       // Create team with next draft position
       const draftPosition = teamCount + 1;
-      const team = await DraftTeamModel.create(leagueId, userId, teamName, draftPosition);
+      const team = await DraftTeamModel.create(leagueId, userId, teamName, teamFlag, draftPosition);
 
       await client.query('COMMIT');
 

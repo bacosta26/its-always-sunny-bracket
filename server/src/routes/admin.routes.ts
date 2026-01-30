@@ -69,6 +69,39 @@ router.post('/brackets/:id/reset', async (req, res) => {
   }
 });
 
+// POST /api/admin/brackets/:id/advance - Close current round and advance to next round
+router.post('/brackets/:id/advance', async (req, res) => {
+  try {
+    const { BracketService } = require('../services/bracket.service');
+    const result = await BracketService.checkAndAdvanceRound(req.params.id);
+
+    if (result.completed) {
+      res.json({ message: 'Bracket completed! Champion has been crowned!' });
+    } else if (result.advanced) {
+      res.json({ message: `Advanced to round ${result.nextRound}!` });
+    } else {
+      res.json({ message: 'Not all matchups are complete yet' });
+    }
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to advance bracket',
+    });
+  }
+});
+
+// POST /api/admin/matchups/:id/close - Manually close a matchup and determine winner
+router.post('/matchups/:id/close', async (req, res) => {
+  try {
+    const { BracketService } = require('../services/bracket.service');
+    await BracketService.closeMatchup(req.params.id);
+    res.json({ message: 'Matchup closed successfully' });
+  } catch (error) {
+    res.status(500).json({
+      error: error instanceof Error ? error.message : 'Failed to close matchup',
+    });
+  }
+});
+
 // POST /api/admin/episodes - Create episode
 router.post('/episodes', async (req, res) => {
   // TODO: Implement episode creation

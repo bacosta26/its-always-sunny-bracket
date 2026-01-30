@@ -164,6 +164,7 @@ export const BracketService = {
 
   /**
    * Check if a round is complete and advance if needed
+   * This will automatically close any active matchups in the current round
    */
   async checkAndAdvanceRound(bracketId: string) {
     const client = await pool.connect();
@@ -181,16 +182,15 @@ export const BracketService = {
         bracket.current_round
       );
 
-      // Check if all matchups in current round are complete
-      const allComplete = currentRoundMatchups.every(m => m.status === 'completed');
-      if (!allComplete) {
-        await client.query('COMMIT');
-        return { advanced: false };
-      }
-
-      // Determine winners for matchups without winners set
+      // Close all active matchups and determine winners
       for (const matchup of currentRoundMatchups) {
-        if (!matchup.winner_episode_id && matchup.episode1_id && matchup.episode2_id) {
+        // Skip matchups that are missing episodes (byes)
+        if (!matchup.episode1_id || !matchup.episode2_id) {
+          continue;
+        }
+
+        // If matchup is still active or has no winner, close it now
+        if (matchup.status === 'active' || !matchup.winner_episode_id) {
           const winnerId = matchup.vote_count_ep1 >= matchup.vote_count_ep2
             ? matchup.episode1_id
             : matchup.episode2_id;
@@ -199,8 +199,14 @@ export const BracketService = {
         }
       }
 
+      // Refresh matchup data after closing them
+      const updatedMatchups = await MatchupModel.findByBracketAndRound(
+        bracketId,
+        bracket.current_round
+      );
+
       // Check if this was the final round
-      if (currentRoundMatchups.length === 1) {
+      if (updatedMatchups.length === 1) {
         // Bracket complete!
         await BracketModel.updateStatus(bracketId, 'completed');
         await client.query('COMMIT');
@@ -209,7 +215,7 @@ export const BracketService = {
 
       // Create next round matchups
       const nextRound = bracket.current_round + 1;
-      const winners = currentRoundMatchups
+      const winners = updatedMatchups
         .map(m => m.winner_episode_id)
         .filter(Boolean) as string[];
 
@@ -395,6 +401,146 @@ export const BracketService = {
     return {
       bracket,
       matchups,
+    };
+  },
+
+  /**
+   * Get voting progress for all users in current round
+   */
+  async getVotingProgress(bracketId: string) {
+    const bracket = await BracketModel.findById(bracketId);
+    if (!bracket) {
+      throw new Error('Bracket not found');
+    }
+
+    // Get active matchups in current round
+    const activeMatchups = await pool.query(
+      `SELECT id FROM bracket_matchups
+       WHERE bracket_id = $1
+       AND round_number = $2
+       AND status = 'active'`,
+      [bracketId, bracket.current_round]
+    );
+
+    const totalMatchups = activeMatchups.rows.length;
+
+    // Get all users with their vote counts for current round active matchups
+    const result = await pool.query(
+      `SELECT
+        u.id,
+        u.username,
+        u.email,
+        COUNT(v.id) as votes_cast
+       FROM users u
+       LEFT JOIN votes v ON u.id = v.user_id
+         AND v.matchup_id IN (
+           SELECT id FROM bracket_matchups
+           WHERE bracket_id = $1
+           AND round_number = $2
+           AND status = 'active'
+         )
+       GROUP BY u.id, u.username, u.email
+       ORDER BY votes_cast DESC, u.username ASC`,
+      [bracketId, bracket.current_round]
+    );
+
+    return {
+      totalMatchups,
+      currentRound: bracket.current_round,
+      users: result.rows.map(row => ({
+        id: row.id,
+        username: row.username,
+        email: row.email,
+        votesCast: parseInt(row.votes_cast),
+        votesRemaining: totalMatchups - parseInt(row.votes_cast),
+        percentComplete: totalMatchups > 0 ? Math.round((parseInt(row.votes_cast) / totalMatchups) * 100) : 0,
+      })),
+    };
+  },
+
+  /**
+   * Get previous round matchups with winners
+   */
+  async getPreviousRound(bracketId: string) {
+    const bracket = await BracketModel.findById(bracketId);
+    if (!bracket) {
+      throw new Error('Bracket not found');
+    }
+
+    // If we're in round 1, there is no previous round
+    if (bracket.current_round === 1) {
+      return {
+        bracket,
+        matchups: [],
+        hasPreviousRound: false,
+      };
+    }
+
+    const previousRound = bracket.current_round - 1;
+
+    // Get all matchups from previous round
+    const result = await pool.query(
+      `SELECT
+        m.id,
+        m.round_number,
+        m.matchup_position,
+        m.status,
+        m.vote_count_ep1,
+        m.vote_count_ep2,
+        m.winner_episode_id,
+        e1.id as ep1_id,
+        e1.title as ep1_title,
+        e1.season_number as ep1_season,
+        e1.episode_number as ep1_episode,
+        e2.id as ep2_id,
+        e2.title as ep2_title,
+        e2.season_number as ep2_season,
+        e2.episode_number as ep2_episode,
+        winner.id as winner_id,
+        winner.title as winner_title,
+        winner.season_number as winner_season,
+        winner.episode_number as winner_episode
+       FROM bracket_matchups m
+       LEFT JOIN episodes e1 ON m.episode1_id = e1.id
+       LEFT JOIN episodes e2 ON m.episode2_id = e2.id
+       LEFT JOIN episodes winner ON m.winner_episode_id = winner.id
+       WHERE m.bracket_id = $1 AND m.round_number = $2
+       ORDER BY m.matchup_position`,
+      [bracketId, previousRound]
+    );
+
+    const matchups = result.rows.map(row => ({
+      id: row.id,
+      roundNumber: row.round_number,
+      matchupPosition: row.matchup_position,
+      status: row.status,
+      voteCountEp1: row.vote_count_ep1,
+      voteCountEp2: row.vote_count_ep2,
+      episode1: row.ep1_id ? {
+        id: row.ep1_id,
+        title: row.ep1_title,
+        seasonNumber: row.ep1_season,
+        episodeNumber: row.ep1_episode,
+      } : undefined,
+      episode2: row.ep2_id ? {
+        id: row.ep2_id,
+        title: row.ep2_title,
+        seasonNumber: row.ep2_season,
+        episodeNumber: row.ep2_episode,
+      } : undefined,
+      winnerEpisode: row.winner_id ? {
+        id: row.winner_id,
+        title: row.winner_title,
+        seasonNumber: row.winner_season,
+        episodeNumber: row.winner_episode,
+      } : undefined,
+    }));
+
+    return {
+      bracket,
+      previousRound,
+      matchups,
+      hasPreviousRound: true,
     };
   },
 

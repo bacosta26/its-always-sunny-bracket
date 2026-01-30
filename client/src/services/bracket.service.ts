@@ -126,4 +126,14 @@ export const bracketService = {
     const { data } = await api.get(`/votes/user/${userId}`);
     return data.votes;
   },
+
+  async getVotingProgress(bracketId: string) {
+    const { data } = await api.get(`/brackets/${bracketId}/voting-progress`);
+    return data;
+  },
+
+  async getPreviousRound(bracketId: string) {
+    const { data } = await api.get(`/brackets/${bracketId}/previous-round`);
+    return data;
+  },
 };
