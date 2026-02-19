@@ -1,14 +1,14 @@
 // Intentional lint errors for CI Log Lens testing — delete after test
 
-// no-unused-vars: 'dee' is declared but never used
-const dee = "Dee Reynolds";
-
-// @typescript-eslint/no-explicit-any: 'any' type is not allowed
+// error  Unexpected any  @typescript-eslint/no-explicit-any
 function getCharacter(id: any): any {
   return id;
 }
 
-// eqeqeq: use '===' instead of '=='
-if (getCharacter(1) == "Mac") {
-  console.log("It's Mac");
+// error  Unexpected any  @typescript-eslint/no-explicit-any
+function processData(data: any): void {
+  console.log(data);
 }
+
+getCharacter(1);
+processData("Mac");
