@@ -45,7 +45,7 @@ export const DraftBoard = () => {
       setCurrentPickingTeam(leagueData.currentPickingTeam);
 
       // Filter out already picked episodes
-      const pickedIds = new Set(leagueData.picks.map(p => p.episodeId));
+      const pickedIds = new Set(leagueData.picks.map((p: DraftPick) => p.episodeId));
       const available = allEpisodes.filter((ep: Episode) => !pickedIds.has(ep.id));
       setAvailableEpisodes(available);
     } catch (error: any) {

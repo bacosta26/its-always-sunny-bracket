@@ -1,15 +1,5 @@
 import api from './api';
-import { Bracket, Matchup, BracketGroup } from '../types';
-
-interface BracketDetailsResponse {
-  bracket: Bracket;
-  matchups: Matchup[];
-}
-
-interface CurrentRoundResponse {
-  bracket: Bracket;
-  matchups: Matchup[];
-}
+import { Bracket } from '../types';
 
 interface BracketStatusResponse {
   id: string;
