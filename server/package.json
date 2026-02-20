@@ -8,7 +8,8 @@
     "build": "tsc",
     "start": "node dist/server.js",
     "migrate": "node dist/database/migrate.js",
-    "seed": "tsx src/database/seed.ts"
+    "seed": "tsx src/database/seed.ts",
+    "lint": "eslint . --ext .ts"
   },
   "keywords": ["express", "typescript", "postgresql", "jwt"],
   "author": "",
@@ -36,6 +37,9 @@
     "@types/cookie-parser": "^1.4.6",
     "@types/uuid": "^9.0.7",
     "typescript": "^5.3.3",
-    "tsx": "^4.7.0"
+    "tsx": "^4.7.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0"
   }
 }
